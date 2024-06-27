@@ -40,12 +40,16 @@
             stompClient.subscribe('/topic/users/' + channel, function (userOutput) {
                 updateUserList(JSON.parse(userOutput.body));
             });
+            stompClient.subscribe('/topic/history/' + channel, function(historyOutput) {
+                loadChatHistory(JSON.parse(historyOutput.body));
+            });
             joinChannel();
         });
     }
 
     function joinChannel() {
         stompClient.send("/app/joinChannel", {}, JSON.stringify({'username': username, 'channel': channel}));
+        stompClient.send("/app/history/" + channel, {});
     }
 
     function leaveChannel() {
@@ -67,6 +71,14 @@
             userElement.appendChild(document.createTextNode(user.username));
             userList.appendChild(userElement);
         });
+    }
+
+    function loadChatHistory(messages) {
+        var messageList = document.getElementById('messages');
+        messageList.innerHTML = '';
+        messages.forEach(function (message) {
+            showMessage(message);
+        })
     }
 
     document.getElementById('form').addEventListener('submit', function (e) {
