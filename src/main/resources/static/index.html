@@ -12,6 +12,7 @@
 </head>
 <body>
 <h2>Channels</h2>
+<input id="username" type="text" placeholder="Your name" autocomplete="off"/>
 <ul id="channels"></ul>
 <form id="createChannelForm">
     <input id="channelName" type="text" placeholder="Channel name" autocomplete="off"/>
@@ -42,7 +43,12 @@
             var channelButton = document.createElement('button');
             channelButton.appendChild(document.createTextNode(channel.name));
             channelButton.addEventListener('click', function() {
-                window.location.href = '/chat.html?channel=' + encodeURIComponent(channel.name);
+                var username = document.getElementById('username').value;
+                if (username) {
+                    window.location.href = '/chat.html?channel=' + encodeURIComponent(channel.name) + '&username=' + encodeURIComponent(username);
+                } else {
+                    alert("Please enter your name.");
+                }
             });
             channelElement.appendChild(channelButton);
             channelList.appendChild(channelElement);
