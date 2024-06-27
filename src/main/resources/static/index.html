@@ -39,7 +39,12 @@
         channelList.innerHTML = '';
         channels.forEach(function (channel) {
             var channelElement = document.createElement('li');
-            channelElement.appendChild(document.createTextNode(channel.name));
+            var channelButton = document.createElement('button');
+            channelButton.appendChild(document.createTextNode(channel.name));
+            channelButton.addEventListener('click', function() {
+                window.location.href = '/chat.html?channel=' + encodeURIComponent(channel.name);
+            });
+            channelElement.appendChild(channelButton);
             channelList.appendChild(channelElement);
         });
     }
