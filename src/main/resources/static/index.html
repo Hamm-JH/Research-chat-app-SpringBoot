@@ -11,6 +11,15 @@
     </style>
 </head>
 <body>
+<h2>Channels</h2>
+<ul id="channels"></ul>
+<form id="createChannelForm">
+    <input id="channelName" type="text" placeholder="Channel name" autocomplete="off"/>
+    <button type="submit">Create Channel</button>
+</form>
+<button id="deleteChannelButton">Delete Channel</button>
+
+<h2>Messages</h2>
 <ul id="messages"></ul>
 <form id="form">
     <input id="from" type="text" placeholder="Your name" autocomplete="off"/>
@@ -20,8 +29,6 @@
 <script>
     var stompClient = null;
 
-    const messages = document.getElementById('messages');
-
     function connect() {
         var socket = new SockJS('/chat');
         stompClient = Stomp.over(socket);
@@ -30,16 +37,34 @@
             stompClient.subscribe('/topic/messages', function (messageOutput) {
                 showMessage(JSON.parse(messageOutput.body));
             });
+            stompClient.subscribe('/topic/channels', function (channelOutput) {
+                updateChannelList(JSON.parse(channelOutput.body));
+            });
+            fetchChannels();
         });
     }
 
     function showMessage(message) {
-        // var messages = document.getElementById('messages');
-        const item = document.createElement('li');
-        // item.textContent = message;
-        item.appendChild(document.createTextNode(message.from + ": " + message.text));
-        messages.appendChild(item);
-        window.scrollTo(0, document.body.scrollHeight);
+        var messages = document.getElementById('messages');
+        var messageElement = document.createElement('li');
+        messageElement.appendChild(document.createTextNode(message.from + ": " + message.text));
+        messages.appendChild(messageElement);
+    }
+
+    function updateChannelList(channels) {
+        var channelList = document.getElementById('channels');
+        channelList.innerHTML = '';
+        channels.forEach(function (channel) {
+            var channelElement = document.createElement('li');
+            channelElement.appendChild(document.createTextNode(channel.name));
+            channelList.appendChild(channelElement);
+        });
+    }
+
+    function fetchChannels() {
+        fetch('/channels')
+            .then(response => response.json())
+            .then(data => updateChannelList(data));
     }
 
     document.getElementById('form').addEventListener('submit', function (e) {
@@ -48,6 +73,20 @@
         var text = document.getElementById('text').value;
         stompClient.send("/app/message", {}, JSON.stringify({'from': from, 'text': text}));
         document.getElementById('text').value = '';
+    });
+
+    document.getElementById('createChannelForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var channelName = document.getElementById('channelName').value;
+        stompClient.send("/app/addChannel", {}, JSON.stringify({'name': channelName}));
+        document.getElementById('channelName').value = '';
+    });
+
+    document.getElementById('deleteChannelButton').addEventListener('click', function () {
+        var channelName = prompt("Enter the name of the channel to delete:");
+        if (channelName) {
+            stompClient.send("/app/deleteChannel", {}, JSON.stringify({'name': channelName}));
+        }
     });
 
     connect();
