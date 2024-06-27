@@ -19,13 +19,6 @@
 </form>
 <button id="deleteChannelButton">Delete Channel</button>
 
-<h2>Messages</h2>
-<ul id="messages"></ul>
-<form id="form">
-    <input id="from" type="text" placeholder="Your name" autocomplete="off"/>
-    <input id="text" type="text" placeholder="Message" autocomplete="off"/>
-    <button type="submit">Send</button>
-</form>
 <script>
     var stompClient = null;
 
@@ -34,21 +27,11 @@
         stompClient = Stomp.over(socket);
         stompClient.connect({}, function (frame) {
             console.log('Connected: ' + frame);
-            stompClient.subscribe('/topic/messages', function (messageOutput) {
-                showMessage(JSON.parse(messageOutput.body));
-            });
             stompClient.subscribe('/topic/channels', function (channelOutput) {
                 updateChannelList(JSON.parse(channelOutput.body));
             });
             fetchChannels();
         });
-    }
-
-    function showMessage(message) {
-        var messages = document.getElementById('messages');
-        var messageElement = document.createElement('li');
-        messageElement.appendChild(document.createTextNode(message.from + ": " + message.text));
-        messages.appendChild(messageElement);
     }
 
     function updateChannelList(channels) {
@@ -66,14 +49,6 @@
             .then(response => response.json())
             .then(data => updateChannelList(data));
     }
-
-    document.getElementById('form').addEventListener('submit', function (e) {
-        e.preventDefault();
-        var from = document.getElementById('from').value;
-        var text = document.getElementById('text').value;
-        stompClient.send("/app/message", {}, JSON.stringify({'from': from, 'text': text}));
-        document.getElementById('text').value = '';
-    });
 
     document.getElementById('createChannelForm').addEventListener('submit', function (e) {
         e.preventDefault();
