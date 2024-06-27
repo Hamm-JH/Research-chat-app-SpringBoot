@@ -63,9 +63,13 @@
 
     document.getElementById('createChannelForm').addEventListener('submit', function (e) {
         e.preventDefault();
-        var channelName = document.getElementById('channelName').value;
-        stompClient.send("/app/addChannel", {}, JSON.stringify({'name': channelName}));
-        document.getElementById('channelName').value = '';
+        var channelName = document.getElementById('channelName').value.trim();
+        if (channelName) {
+            stompClient.send("/app/addChannel", {}, JSON.stringify({'name': channelName}));
+            document.getElementById('channelName').value = '';
+        } else {
+            alert("Channel name cannot be empty or whitespace.");
+        }
     });
 
     document.getElementById('deleteChannelButton').addEventListener('click', function () {

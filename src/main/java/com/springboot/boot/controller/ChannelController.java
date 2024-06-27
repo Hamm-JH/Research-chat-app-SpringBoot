@@ -25,18 +25,20 @@ public class ChannelController {
     }
 
     @MessageMapping("/addChannel")
-    @SendTo("/topic/channels")
-    public List<Channel> addChannel(Channel channel) {
-        channels.add(channel);
-        return channels;
+    public void addChannel(Channel channel) {
+        String trimmedName = channel.getName().trim();
+        if (!trimmedName.isEmpty()) {
+            channel.setName(trimmedName); // 공백을 제거한 이름으로 설정
+            channels.add(channel);
+            messagingTemplate.convertAndSend("/topic/channels", channels);
+        }
     }
 
     @MessageMapping("/deleteChannel")
-    @SendTo("/topic/channels")
-    public List<Channel> deleteChannel(Channel channel) {
+    public void deleteChannel(Channel channel) {
         channels.removeIf(c -> c.getName().equals(channel.getName()));
         users.removeIf(u -> u.getChannel().equals(channel.getName()));
-        return channels;
+        messagingTemplate.convertAndSend("/topic/channels", channels);
     }
 
     @MessageMapping("/joinChannel")
