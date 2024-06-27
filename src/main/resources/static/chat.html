@@ -12,17 +12,20 @@
 </head>
 <body>
 <h2 id="channelName"></h2>
+<p id="username">User</p>
 <ul id="messages"></ul>
 <form id="form">
-    <input id="from" type="text" placeholder="Your name" autocomplete="off"/>
     <input id="text" type="text" placeholder="Message" autocomplete="off"/>
     <button type="submit">Send</button>
 </form>
 <script>
     var stompClient = null;
-    var channel = new URLSearchParams(window.location.search).get('channel');
+    var urlParams = new URLSearchParams(window.location.search);
+    var channel = urlParams.get('channel');
+    var username = urlParams.get('username');
 
     document.getElementById('channelName').textContent = 'Channel: ' + channel;
+    document.getElementById('username').textContent = 'User: ' + username;
 
     function connect() {
         var socket = new SockJS('/chat');
@@ -44,9 +47,8 @@
 
     document.getElementById('form').addEventListener('submit', function (e) {
         e.preventDefault();
-        var from = document.getElementById('from').value;
         var text = document.getElementById('text').value;
-        stompClient.send("/app/message/" + channel, {}, JSON.stringify({'from': from, 'text': text, 'channel': channel}));
+        stompClient.send("/app/message/" + channel, {}, JSON.stringify({'from': username, 'text': text, 'channel': channel}));
         document.getElementById('text').value = '';
     });
 
