@@ -25,7 +25,7 @@ public class ChatController {
     @MessageMapping("/message/{channel}")
     public void sendMessage(ChatMessage message, @DestinationVariable String channel) {
         if (!message.getText().trim().isEmpty()) {
-            messagingTemplate.convertAndSend("/topic/messages/" + channel, message);
+            messagingTemplate.convertAndSend("/topic/messages/" + channel, message); 
         }
     }
 }
