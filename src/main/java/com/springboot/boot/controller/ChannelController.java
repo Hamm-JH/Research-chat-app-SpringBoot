@@ -3,7 +3,6 @@ package com.springboot.boot.controller;
 import com.springboot.boot.model.Channel;
 import com.springboot.boot.model.User;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -71,9 +71,13 @@
 
     document.getElementById('form').addEventListener('submit', function (e) {
         e.preventDefault();
-        var text = document.getElementById('text').value;
-        stompClient.send("/app/message/" + channel, {}, JSON.stringify({'from': username, 'text': text, 'channel': channel}));
-        document.getElementById('text').value = '';
+        var text = document.getElementById('text').value.trim();
+        if (text) {
+            stompClient.send("/app/message/" + channel, {}, JSON.stringify({'from': username, 'text': text, 'channel': channel}));
+            document.getElementById('text').value = '';
+        } else {
+            alert("Message cannot be empty or whitespace.");
+        }
     });
 
     window.addEventListener('beforeunload', function() {
