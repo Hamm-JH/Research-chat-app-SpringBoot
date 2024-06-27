@@ -13,6 +13,8 @@
 <body>
 <h2 id="channelName"></h2>
 <p id="username">User</p>
+<h3>Users in this channel:</h3>
+<ul id="userList"></ul>
 <ul id="messages"></ul>
 <form id="form">
     <input id="text" type="text" placeholder="Message" autocomplete="off"/>
@@ -35,7 +37,19 @@
             stompClient.subscribe('/topic/messages/' + channel, function (messageOutput) {
                 showMessage(JSON.parse(messageOutput.body));
             });
+            stompClient.subscribe('/topic/users/' + channel, function (userOutput) {
+                updateUserList(JSON.parse(userOutput.body));
+            });
+            joinChannel();
         });
+    }
+
+    function joinChannel() {
+        stompClient.send("/app/joinChannel", {}, JSON.stringify({'username': username, 'channel': channel}));
+    }
+
+    function leaveChannel() {
+        stompClient.send("/app/leaveChannel", {}, JSON.stringify({'username': username, 'channel': channel}));
     }
 
     function showMessage(message) {
@@ -45,11 +59,25 @@
         messages.appendChild(messageElement);
     }
 
+    function updateUserList(users) {
+        var userList = document.getElementById('userList');
+        userList.innerHTML = '';
+        users.forEach(function (user) {
+            var userElement = document.createElement('li');
+            userElement.appendChild(document.createTextNode(user.username));
+            userList.appendChild(userElement);
+        });
+    }
+
     document.getElementById('form').addEventListener('submit', function (e) {
         e.preventDefault();
         var text = document.getElementById('text').value;
         stompClient.send("/app/message/" + channel, {}, JSON.stringify({'from': username, 'text': text, 'channel': channel}));
         document.getElementById('text').value = '';
+    });
+
+    window.addEventListener('beforeunload', function() {
+        leaveChannel();
     });
 
     connect();
