@@ -39,12 +39,6 @@ public class ChatController {
         messagingTemplate.convertAndSend("/topic/history/" + channel, messages);
     }
 
-//    @MessageMapping("/joinChannel/{channel}")
-//    public void joinChannel(String username, @DestinationVariable String channel) {
-//        List<ChatMessage> messages = chatHistory.getOrDefault(channel, new ArrayList<>());
-//        messagingTemplate.convertAndSend("/topic/history/" + channel, messages);
-//    }
-
     private void saveMessage(ChatMessage message) {
         chatHistory.computeIfAbsent(message.getChannel(), k -> new ArrayList<>()).add(message);
     }
