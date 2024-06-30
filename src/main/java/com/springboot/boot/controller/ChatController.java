@@ -1,45 +1,72 @@
 package com.springboot.boot.controller;
 
+import com.springboot.boot.dto.ChatMessageDTO;
+import com.springboot.boot.model.Channel;
 import com.springboot.boot.model.ChatMessage;
+import com.springboot.boot.repository.ChannelRepository;
+import com.springboot.boot.repository.ChatMessageRepository;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 public class ChatController {
 
-    // 채널별로 메시지를 처리하도록 변경하고, 채널 정보를 포함한 메시지를 전송합니다.
     private final SimpMessagingTemplate messagingTemplate;
-    private final Map<String, List<ChatMessage>> chatHistory = new HashMap<>();
+    private final ChatMessageRepository chatMessageRepository;
+    private final ChannelRepository channelRepository;
 
-    // SimpMessagingTemplate를 초기화 합니다.
-    public ChatController(SimpMessagingTemplate messagingTemplate) {
+    public ChatController(SimpMessagingTemplate messagingTemplate,
+                          ChatMessageRepository chatMessageRepository,
+                          ChannelRepository channelRepository) {
         this.messagingTemplate = messagingTemplate;
+        this.chatMessageRepository = chatMessageRepository;
+        this.channelRepository = channelRepository;
     }
 
     @MessageMapping("/message/{channel}")
-    public void sendMessage(ChatMessage message, @DestinationVariable String channel) {
-        if (!message.getText().trim().isEmpty()) {
-            message.setChannel(channel);
-            saveMessage(message);
-            messagingTemplate.convertAndSend("/topic/messages/" + channel, message); 
+    public void sendMessage(ChatMessageDTO messageDTO, @DestinationVariable String channel) {
+        if (!messageDTO.getText().trim().isEmpty()) {
+            Channel channelEntity = channelRepository.findByName(channel);
+            if (channelEntity != null) {
+                ChatMessage message = new ChatMessage();
+                message.setFrom(messageDTO.getFrom());
+                message.setText(messageDTO.getText());
+                message.setChannel(channelEntity);
+                message.setTimestamp(LocalDateTime.now());
+                chatMessageRepository.save(message);
+
+                // 저장된 메시지의 ID와 타임스탬프를 DTO에 설정
+                messageDTO.setId(message.getId());
+                messageDTO.setTimestamp(message.getTimestamp());
+                messageDTO.setChannelName(channel);
+
+                messagingTemplate.convertAndSend("/topic/messages/" + channel, messageDTO);
+            }
         }
     }
 
     @MessageMapping("/history/{channel}")
     public void sendChatHistory(@DestinationVariable String channel) {
-        List<ChatMessage> messages = chatHistory.getOrDefault(channel, new ArrayList<>());
+        List<ChatMessageDTO> messages = chatMessageRepository.findByChannelNameOrderByTimestampAsc(channel)
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
         messagingTemplate.convertAndSend("/topic/history/" + channel, messages);
     }
 
-    private void saveMessage(ChatMessage message) {
-        chatHistory.computeIfAbsent(message.getChannel(), k -> new ArrayList<>()).add(message);
+    private ChatMessageDTO convertToDTO(ChatMessage message) {
+        ChatMessageDTO dto = new ChatMessageDTO();
+        dto.setId(message.getId());
+        dto.setFrom(message.getFrom());
+        dto.setText(message.getText());
+        dto.setChannelName(message.getChannel().getName());
+        dto.setTimestamp(message.getTimestamp());
+        return dto;
     }
 }
