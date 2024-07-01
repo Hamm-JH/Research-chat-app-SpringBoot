@@ -1,39 +1,26 @@
-package com.springboot.boot.model;
+package com.springboot.boot.dto;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "chat_messages")
-public class ChatMessage {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class ChatMessageDTO {
     private Long id;
-
-    @Column(name = "from_user", nullable = false)
     private String from;
-
-    @Column(nullable = false)
     private String text;
-
-    @ManyToOne
-    @JoinColumn(name = "channel_id", nullable = false)
-    private Channel channel;
-
-    @Column(nullable = false)
+    private String channelName;
     private LocalDateTime timestamp;
 
-    public ChatMessage() {}
+    // Constructors
+    public ChatMessageDTO() {}
 
-    public ChatMessage(String from, String text, Channel channel) {
+    public ChatMessageDTO(Long id, String from, String text, String channelName, LocalDateTime timestamp) {
+        this.id = id;
         this.from = from;
         this.text = text;
-        this.channel = channel;
-        this.timestamp = LocalDateTime.now();
+        this.channelName = channelName;
+        this.timestamp = timestamp;
     }
 
     // Getters and setters
-
     public Long getId() {
         return id;
     }
@@ -58,12 +45,12 @@ public class ChatMessage {
         this.text = text;
     }
 
-    public Channel getChannel() {
-        return channel;
+    public String getChannelName() {
+        return channelName;
     }
 
-    public void setChannel(Channel channel) {
-        this.channel = channel;
+    public void setChannelName(String channelName) {
+        this.channelName = channelName;
     }
 
     public LocalDateTime getTimestamp() {
