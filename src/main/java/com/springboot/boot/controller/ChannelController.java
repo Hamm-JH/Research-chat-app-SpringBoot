@@ -1,10 +1,13 @@
 package com.springboot.boot.controller;
 
 import com.springboot.boot.dto.ChannelDTO;
+import com.springboot.boot.dto.UserDTO;
 import com.springboot.boot.model.Channel;
 import com.springboot.boot.model.User;
 import com.springboot.boot.repository.ChannelRepository;
 import com.springboot.boot.repository.UserRepository;
+import jakarta.transaction.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
@@ -12,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Controller
@@ -51,22 +55,39 @@ public class ChannelController {
     }
 
     @MessageMapping("/joinChannel")
+    @Transactional
     public void joinChannel(User user) {
         Channel channel = channelRepository.findByName(user.getChannel().getName());
         if (channel != null) {
-            user.setChannel(channel);
-            userRepository.save(user);
-            messagingTemplate.convertAndSend("/topic/users/" + channel.getName(), userRepository.findByChannelName(channel.getName()));
+            try {
+                user.setChannel(channel);
+                userRepository.save(user);
+
+                List<UserDTO> channelUsers = userRepository.findByChannelName(channel.getName())
+                        .stream()
+                        .map(u -> new UserDTO(u.getId(), u.getUsername()))
+                        .collect(Collectors.toList());
+                messagingTemplate.convertAndSend("/topic/users/" + channel.getName(), channelUsers);
+            } catch (DataIntegrityViolationException e) {
+                // 중복 사용자 이름 예외 처리
+                messagingTemplate.convertAndSend("/topic/error/" + channel.getName(), "Username already exists");
+            }
         }
     }
 
     @MessageMapping("/leaveChannel")
+    @Transactional
     public void leaveChannel(User user) {
         User existingUser = userRepository.findById(user.getId()).orElse(null);
         if (existingUser != null) {
             Channel channel = existingUser.getChannel();
             userRepository.delete(existingUser);
-            messagingTemplate.convertAndSend("/topic/users/" + channel.getName(), userRepository.findByChannelName(channel.getName()));
+
+            List<UserDTO> channelUsers = userRepository.findByChannelName(channel.getName())
+                    .stream()
+                    .map(u -> new UserDTO(u.getId(), u.getUsername()))
+                    .collect(Collectors.toList());
+            messagingTemplate.convertAndSend("/topic/users/" + channel.getName(), channelUsers);
         }
     }
 
