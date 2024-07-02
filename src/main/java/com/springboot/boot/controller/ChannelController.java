@@ -57,27 +57,52 @@ public class ChannelController {
     @MessageMapping("/joinChannel")
     @Transactional
     public void joinChannel(User user) {
+        if (user.getUsername() == null || user.getUsername().trim().isEmpty()) {
+            messagingTemplate.convertAndSend("/topic/error", "Username cannot be empty");
+            return;
+        }
+
         Channel channel = channelRepository.findByName(user.getChannel().getName());
-        if (channel != null) {
-            try {
+        if (channel == null) {
+            messagingTemplate.convertAndSend("/topic/error", "Channel does not found");
+            return;
+        }
+
+        try {
+            List<User> existingUsers = userRepository.findByChannelName(channel.getName());
+            User existingUser = existingUsers.stream()
+                    .filter(u -> u.getUsername().equals(user.getUsername()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (existingUser != null) {
+                // 이미 존재하는 사용자의 경우, 필요한 업데이트를 수행
+                // 예: 접속 시간 업데이트 등
+                userRepository.save(existingUser);
+            } else {
+                // 새 사용자 저장
                 user.setChannel(channel);
                 userRepository.save(user);
-
-                List<UserDTO> channelUsers = userRepository.findByChannelName(channel.getName())
-                        .stream()
-                        .map(u -> new UserDTO(u.getId(), u.getUsername()))
-                        .collect(Collectors.toList());
-                messagingTemplate.convertAndSend("/topic/users/" + channel.getName(), channelUsers);
-            } catch (DataIntegrityViolationException e) {
-                // 중복 사용자 이름 예외 처리
-                messagingTemplate.convertAndSend("/topic/error/" + channel.getName(), "Username already exists");
             }
+
+            List<UserDTO> channelUsers = existingUsers.stream()
+                    .map(u -> new UserDTO(u.getId(), u.getUsername()))
+                    .collect(Collectors.toList());
+            messagingTemplate.convertAndSend("/topic/users/" + channel.getName(), channelUsers);
+        } catch (DataIntegrityViolationException e) {
+            // 중복 사용자 이름 예외 처리
+            messagingTemplate.convertAndSend("/topic/error/" + channel.getName(), "An error occured while joining the channel");
         }
     }
 
     @MessageMapping("/leaveChannel")
     @Transactional
     public void leaveChannel(User user) {
+        if (user.getId() == null) {
+            return;
+        }
+
+        // 유저를 찾습니다.
         User existingUser = userRepository.findById(user.getId()).orElse(null);
         if (existingUser != null) {
             Channel channel = existingUser.getChannel();
