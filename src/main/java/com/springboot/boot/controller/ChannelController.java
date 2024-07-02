@@ -83,6 +83,8 @@ public class ChannelController {
                 // 새 사용자 저장
                 user.setChannel(channel);
                 userRepository.save(user);
+                // 새 사용자를 existingUsers 리스트에 추가
+                existingUsers.add(user);
             }
 
             List<UserDTO> channelUsers = existingUsers.stream()
