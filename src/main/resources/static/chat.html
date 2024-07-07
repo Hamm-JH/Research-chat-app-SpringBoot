@@ -29,8 +29,21 @@
     document.getElementById('channelName').textContent = 'Channel: ' + channel;
     document.getElementById('username').textContent = 'User: ' + username;
 
+    let socketUrl;
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        socketUrl = '/chat';
+        console.log(1);
+    } else {
+        // let wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'http://';
+        let wsProtocol = window.location.protocol === 'https:' ? 'https://' : 'http://';
+        socketUrl = wsProtocol + window.location.host + '/chat';
+        console.log(2);
+    }
+
+    console.log(socketUrl);
+
     function connect() {
-        var socket = new SockJS('/chat');
+        var socket = new SockJS(socketUrl);
         stompClient = Stomp.over(socket);
         stompClient.connect({}, function (frame) {
             console.log('Connected: ' + frame);
