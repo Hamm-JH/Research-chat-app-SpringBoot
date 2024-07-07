@@ -28,21 +28,12 @@
         socketUrl = '/chat';
         console.log(1);
     } else {
-        // let wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'http://';
         let wsProtocol = window.location.protocol === 'https:' ? 'https://' : 'http://';
         socketUrl = wsProtocol + window.location.host + '/chat';
         console.log(2);
     }
 
     console.log(socketUrl);
-
-    // let wsProtocol = window.location.protocol === 'https:' ? 'wss://' : '';
-    // let wsUrl = wsProtocol + window.location.host + '/chat';
-    // let socket = new SockJS(socketUrl);
-    // console.log(window.location.host);
-    // console.log(wsUrl);
-    // console.log(socket);
-    // console.log('------------');
 
     function connect() {
         console.log(socketUrl);

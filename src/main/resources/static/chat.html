@@ -34,7 +34,6 @@
         socketUrl = '/chat';
         console.log(1);
     } else {
-        // let wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'http://';
         let wsProtocol = window.location.protocol === 'https:' ? 'https://' : 'http://';
         socketUrl = wsProtocol + window.location.host + '/chat';
         console.log(2);
